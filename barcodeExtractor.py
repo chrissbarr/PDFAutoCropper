@@ -4,6 +4,9 @@ import subprocess
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from gooey import Gooey, GooeyParser
 
+nonbuffered_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stdout = nonbuffered_stdout
+
 def filter(in_file, out_file, arguments):
     print("Beginning filter operation...")
 
