@@ -5,7 +5,7 @@ from gooey import Gooey, GooeyParser
 
 
 
-def extract(in_file, coords, out_file):
+def extract(in_file, coords, searchString, out_file):
     with open(in_file, 'rb') as infp:
         reader = PdfFileReader(infp)
         writer = PdfFileWriter()
@@ -14,15 +14,13 @@ def extract(in_file, coords, out_file):
         numPages = reader.getNumPages()
         print("document has %s pages." % numPages)
 
-
-        for j in range(2):
-            for i in range(numPages):
-                page = reader.getPage(i)
-                pageText = page.extractText()
-                if (pageText.find("AP Article Id") != -1):
-                    page.mediaBox.lowerLeft = coords[:2]
-                    page.mediaBox.upperRight = coords[2:]
-                    writer.addPage(page)
+        for i in range(numPages):
+            page = reader.getPage(i)
+            pageText = page.extractText()
+            if (pageText.find(searchString) != -1):
+                page.mediaBox.lowerLeft = coords[:2]
+                page.mediaBox.upperRight = coords[2:]
+                writer.addPage(page)
 
         with open(out_file, 'wb') as outfp:
             writer.write(outfp)
@@ -74,7 +72,7 @@ def main():
     parser.add_argument('y1', action="store", type=int, default=50)
     parser.add_argument('x2', action="store", type=int, default=300)
     parser.add_argument('y2', action="store", type=int, default=380)
-    parser.add_argument('searchString', action="store", default="AP Article Id")
+    parser.add_argument('--searchString', action="store", default="AP Article Id")
 
     print parser.parse_args()
 
@@ -84,7 +82,7 @@ def main():
     coords = [results.x1, results.y1, results.x2, results.y2]
     out_file = results.OutputFile
 
-    extract(in_file, coords, out_file)
+    extract(in_file, coords, results.searchString, out_file)
     merge(out_file, "merged.pdf")
 
 if __name__ == '__main__':
