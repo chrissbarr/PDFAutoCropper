@@ -43,18 +43,20 @@ def filter(in_file, out_file, arguments):
 
             writer.addPage(page)
 
-        print("Filtering complete, filtered output written to '%s'" % out_file)
         with open(out_file, 'wb') as outfp:
            writer.write(outfp)
 
+        print("Filtering complete, filtered output written to '%s'" % out_file)
+
 
 def crop(in_file, out_file, coords):
+    print("Beginning crop operation...")
+
     with open(in_file, 'rb') as infp:
         reader = PdfFileReader(infp)
         writer = PdfFileWriter()
 
         numPages = reader.getNumPages()
-        print("document has %s pages." % numPages)
 
         for i in range(numPages):
             page = reader.getPage(i)
@@ -65,15 +67,17 @@ def crop(in_file, out_file, coords):
         with open(out_file, 'wb') as outfp:
            writer.write(outfp)
 
+        print("Cropping complete, cropped output written to '%s'" % out_file)
+
 
 def merge(in_file, out_file, rotation):
+    print("Beginning merge operation...")
 
     with open(in_file, 'rb') as infp:
         reader = PdfFileReader(infp)
         writer = PdfFileWriter()
 
         numPages = reader.getNumPages()
-        print("document has %s pages." % numPages)
 
         outpage = writer.addBlankPage(
             width=1,
@@ -93,6 +97,8 @@ def merge(in_file, out_file, rotation):
 
         with open(out_file, 'wb') as outfp:
            writer.write(outfp)
+
+        print("Merge complete, merged output written to '%s'" % out_file)
 
 @Gooey (
     program_name='PDF AutoCropper',
