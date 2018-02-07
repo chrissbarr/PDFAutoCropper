@@ -87,16 +87,34 @@ def merge(in_file, out_file, rotation):
             height=1
         )
 
+        yPadding=10
+        xPadding=10
+        yOffset=0
+        xOffset=0
+
         for i in range(numPages):
             page = reader.getPage(i)
+
+            if(rotation == 90 or rotation == 270):
+                yBounds = page.mediaBox.getWidth()
+                xBounds = page.mediaBox.getHeight()
+            else:
+                yBounds = page.mediaBox.getHeight()
+                xBounds = page.mediaBox.getWidth()
+
+            print("%s, %s" %(xBounds,yBounds))
 
             page.mediaBox.lowerLeft
             spacing=35
             horOffset=160
+
             if i % 2 == 0:
-                outpage.mergeRotatedTranslatedPage(page, rotation, (i/2)*spacing, -(i/2)*spacing, expand=True)
+                outpage.mergeRotatedTranslatedPage(page, rotation, yOffset, -yOffset, expand=True)
+                xOffset = xOffset + xBounds/2 + xPadding
             else:
-                outpage.mergeRotatedTranslatedPage(page, rotation, horOffset+(i/2)*spacing, horOffset-(i/2)*spacing, expand=True)
+                outpage.mergeRotatedTranslatedPage(page, rotation, xOffset+yOffset, xOffset-yOffset, expand=True)
+                yOffset = yOffset + yBounds/2 + yPadding
+                xOffset = 0
 
         with open(out_file, 'wb') as outfp:
            writer.write(outfp)
