@@ -1,9 +1,8 @@
 import sys
+import os
+import subprocess
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from gooey import Gooey, GooeyParser
-
-
-
 
 def extract(in_file, coords, searchString, out_file):
     with open(in_file, 'rb') as infp:
@@ -56,9 +55,6 @@ def merge(in_file, out_file):
             #writer.getPage(0).mergeTranslatedPage(page.rotateClockwise(270),i*500,i*0, expand=True)
             #merger.append(page.rotateClockwise(270))
 
-        
-
-        
         with open(out_file, 'wb') as outfp:
             writer.write(outfp)
 
@@ -82,10 +78,13 @@ def main():
     coords = [results.x1, results.y1, results.x2, results.y2]
     out_file = results.OutputFile
 
-    extract(in_file, coords, results.searchString, out_file)
-    merge(out_file, "merged.pdf")
+    extract(in_file, coords, results.searchString, "split.pdf")
+    merge("split.pdf", out_file)
+
+    if os.name == "nt":
+        os.startfile(out_file)
+    else:
+        subprocess.call(("open", out_file))
 
 if __name__ == '__main__':
     main()
-
-
