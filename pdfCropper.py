@@ -16,12 +16,12 @@ def filter(in_file, out_file, arguments):
         numPages = reader.getNumPages()
         print("Document has %s pages." % numPages)
 
-        if(arguments.FilterStartPage != None):
+        if(arguments.InputStartPage != None):
             first_page = arguments.FilterStartPage
         else:
             first_page = 0
 
-        if(arguments.FilterEndPage != None):
+        if(arguments.InputEndPage != None):
             last_page = arguments.FilterEndPage
         else:
             last_page = numPages
@@ -73,7 +73,7 @@ def crop(in_file, out_file, coords):
         print("Cropping complete, cropped output written to '%s'" % out_file)
 
 
-def merge(in_file, out_file, rotation):
+def merge(in_file, out_file, arguments):
     print("Beginning merge operation...")
 
     with open(in_file, 'rb') as infp:
@@ -87,8 +87,9 @@ def merge(in_file, out_file, rotation):
             height=1
         )
 
-        yPadding=10
-        xPadding=10
+        yPadding=arguments.MergeXPadding
+        xPadding=arguments.MergeYPadding
+        rotation=arguments.Rotation
         yOffset=0
         xOffset=0
 
@@ -130,52 +131,56 @@ def merge(in_file, out_file, rotation):
 def main():
     parser = GooeyParser()
 
-    input_group = parser.add_argument_group(
-        "", 
-        ""
-    )
-
+    ### Input Section
+    input_group = parser.add_argument_group("File Input", "")
     input_group.add_argument('InputFile', metavar="Input File:", help="Select the PDF to be loaded", action="store", widget="FileChooser", default="in.pdf")
+    input_page_group = parser.add_argument_group("", "", gooey_options={'show_border': True,'columns': 2})
+    input_page_group.add_argument('--InputStartPage', metavar="Start Page", help="Pages before this will be discarded", action="store", type=int)
+    input_page_group.add_argument('--InputEndPage', metavar="End Page", help="Pages after this will be discarded", action="store", type=int)
 
-    filter_group = parser.add_argument_group(
-        "Filter", 
-        ""
-    )
-    filter_group.add_argument('--FilterStartPage',      metavar="Start Page",       help="Pages before this will be discarded",     action="store",         type=int)
-    filter_group.add_argument('--FilterEndPage',        metavar="End Page",         help="Pages after this will be discarded",      action="store",         type=int)
-    filter_group.add_argument('--FilterString',         metavar="Filter",           help="Only keep pages containing this text",    action="store",         type=str)
-    filter_group.add_argument('--FilterStringCaseIns',  metavar="Case Insensitive", help="Should text search should ignore case",   action="store_true")
+    ### Filter Section
+    filter_group = parser.add_argument_group("Filter", "")
+    filter_option_group = parser.add_argument_group("", "", gooey_options={'show_border': True,'columns': 4})
+    filter_group.add_argument('--FilterString', metavar="Filter", help="Only keep pages containing this text (ignored if blank)", action="store", type=str)
+    filter_option_group.add_argument('--FilterStringCaseIns', metavar="Case Insensitive", help="Should text search should ignore case", action="store_true")
+    filter_option_group.add_argument('--FilterStringInvSearch', metavar="Invert Search", help="Include pages which do not match search", action="store_true")
 
-    proc_group = parser.add_argument_group(
-        "Crop", 
-        ""
-    )
-    proc_group.add_argument('x1', action="store", type=int, default='0')
-    proc_group.add_argument('y1', action="store", type=int, default='0')
-    proc_group.add_argument('x2', action="store", type=int, default='100')
-    proc_group.add_argument('y2', action="store", type=int, default='100')
-    proc_group.add_argument('rotation', metavar="Rotation (degrees)", action="store", type=int, default='0')
+    ### Crop Section
+    crop_group = parser.add_argument_group("Crop", "")
+    crop_option_group = parser.add_argument_group("", "", gooey_options={'show_border': True,'columns': 4})
+    crop_group.add_argument('--CropEnable', metavar="Enable", help="Enable crop operation", action="store_true")
+    crop_option_group.add_argument('--CropX1', metavar="X1", action="store", type=int, default='0')
+    crop_option_group.add_argument('--CropY1', metavar="Y1", action="store", type=int, default='0')
+    crop_option_group.add_argument('--CropX2', metavar="X2", action="store", type=int, default='100')
+    crop_option_group.add_argument('--CropY2', metavar="Y2", action="store", type=int, default='100')
+    crop_option_group.add_argument('--Rotation', metavar="Rotation (degrees)", action="store", type=int, default='0')
 
-    output_group = parser.add_argument_group(
-        "Output", 
-        ""
-    )
+    ### Merge Section
+    merge_group = parser.add_argument_group("Merge", "")
+    merge_option_group = parser.add_argument_group("", "", gooey_options={'show_border': True,'columns': 4})
+    merge_group.add_argument('--MergeEnable',  metavar="Enable", help="Enable merge operation", action="store_true")
+    merge_option_group.add_argument('--MergeXPadding', metavar="Layout X Padding", action="store", type=int, default='0')
+    merge_option_group.add_argument('--MergeYPadding', metavar="Layout Y Padding", action="store", type=int, default='0')
+
+    ### Output Section
+    output_group = parser.add_argument_group("Output", "")
+    output_option_group = parser.add_argument_group("", "", gooey_options={'show_border': True,'columns': 2})
     output_group.add_argument('OutputFile', action="store", widget="FileChooser", default="out.pdf")
-    output_group.add_argument('--OpenOutput', metavar="Open output file?", help="Open generated PDF when done", action="store_false", dest='leaveClosedOnFinish', default=True)
+    output_option_group.add_argument('--OutputOpenFile', metavar="Open output file?", help="Open generated PDF when done", action="store_false", dest='leaveClosedOnFinish', default=True)
+    output_option_group.add_argument('--OutputDeleteIntermed', metavar="Delete intermediary files?", help="Delete temporary files generated during process", action="store_false", dest='deleteTempFiles', default=True)
 
     print parser.parse_args()
-
     results = parser.parse_args()
 
     in_file = results.InputFile
-    coords = [results.x1, results.y1, results.x2, results.y2]
+    coords = [results.CropX1, results.CropY1, results.CropX2, results.CropY2]
     out_file = results.OutputFile
 
     filter(in_file, "filtered.pdf", results)
 
     crop("filtered.pdf", "extracted.pdf", coords)
 
-    merge('extracted.pdf', out_file, results.rotation)
+    merge('extracted.pdf', out_file, results)
 
     if(results.leaveClosedOnFinish == False):
         if os.name == "nt":
