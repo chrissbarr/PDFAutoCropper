@@ -3,6 +3,7 @@ import os
 import subprocess
 from PyPDF2 import PdfFileReader, PdfFileWriter
 from gooey import Gooey, GooeyParser
+from shutil import copyfile
 
 nonbuffered_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stdout = nonbuffered_stdout
@@ -41,8 +42,11 @@ def filter(in_file, out_file, arguments):
 
                 if (pageText.find(arguments.FilterString) != -1):
                     print("Page %s contains filter string %s..." % (i, arguments.FilterString))
+                    if(arguments.FilterStringInvSearch==True):
+                        continue
                 else:
-                    continue
+                    if(arguments.FilterStringInvSearch==False):
+                        continue
 
             writer.addPage(page)
 
@@ -175,12 +179,20 @@ def main():
     in_file = results.InputFile
     coords = [results.CropX1, results.CropY1, results.CropX2, results.CropY2]
     out_file = results.OutputFile
+    last_file = in_file
 
-    filter(in_file, "filtered.pdf", results)
+    filter(last_file, "filtered.pdf", results)
+    last_file = "filtered.pdf"
 
-    crop("filtered.pdf", "extracted.pdf", coords)
+    if(results.CropEnable == True):
+        crop(last_file, "cropped.pdf", coords)
+        last_file = "cropped.pdf"
 
-    merge('extracted.pdf', out_file, results)
+    if(results.MergeEnable == True):
+        merge(last_file, "merged.pdf", results)
+        last_file = "merged.pdf"
+
+    copyfile(last_file, out_file)
 
     if(results.leaveClosedOnFinish == False):
         if os.name == "nt":
