@@ -22,3 +22,6 @@ A PyInstaller `build.spec` file is included that configures PyInstaller to build
 The executable can then be built:
 
      pyinstaller build.spec
+
+## Todo
+- Rotation code is currently borked
